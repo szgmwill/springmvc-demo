@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- Maven Test Demo DB Table -->
+<mapper namespace="com.tianxun.demo.dao.TestDemoDao">
+ 	<resultMap id="TestDemoResultMap" type="com.tianxun.demo.entity.TestDemoDo" >
+       <result property="pid" column="pid" />
+       <result property="demoBiz1" column="demo_biz_1" />
+       <result property="demoBiz2" column="demo_biz_2" />   
+       <result property="demoBiz3" column="demo_biz_3" />
+       <result property="createTime" column="create_time" />
+    </resultMap>
+  
+  <sql id="base_column">
+  	pid, demo_biz_1, demo_biz_2, demo_biz_3, create_time
+  </sql>
+  
+  
+  <!-- Query -->
+  <select id="queryTestDemo" resultMap="TestDemoResultMap">
+	select
+		<include refid="base_column"/>
+	from
+		test.t_tianxun_module_demo
+	<where>
+		<if test="reqNum != null">
+			demo_biz_1 = #{reqNum}
+		</if>
+	</where>
+  </select>
+
+
+  <!-- Insert -->
+  
+  <!-- Update -->
+  
+</mapper>
+

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+	<!-- 定义受环境影响易变的变量 -->
+	<bean
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location">
+			<value>classpath:config_${env}.properties</value>
+		</property>
+	</bean>
+
+	<!-- annotation config - enable -->
+	<context:annotation-config />
+
+	<!-- annotation config - scan path -->
+	<context:component-scan base-package="com.tianxun.demo" />
+
+	<!-- aop enable deal with @Aspect -->
+	<aop:aspectj-autoproxy proxy-target-class="true" />
+
+	<!-- mybatis -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<property name="configLocation" value="classpath:conf-mybatis/sqlmap.xml" />
+		<property name="mapperLocations" value="classpath*:conf-mybatis/**/t_tianxun*.xml" />
+	</bean>
+	<!-- 自动化处理DAO映射 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.tianxun.demo.dao" />
+	</bean>
+
+	<bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg ref="sqlSessionFactory" />
+	</bean>
+
+
+	<!-- 开启事务注解驱动 -->
+	<tx:annotation-driven transaction-manager="transactionManager" />
+
+	<!-- 事务管理器配置, 使用jdbc事务 -->
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+	<!-- 使用annotation定义事务 -->
+	<tx:annotation-driven transaction-manager="transactionManager"
+		proxy-target-class="false" />
+
+	<!-- DATA BASE SETTINGS ==> datasource -->
+	<!-- 阿里巴巴开源数据库连接池Druid框架 -->
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource"
+		init-method="init" destroy-method="close">
+		<!-- 数据库地址配置  -->
+		
+		<!-- 在DruidDataSource中，你可以不配置DriverClass,
+		它根据url自动识别,Druid能够自动识别20多中url,常见的JDBC Driver都包括了 -->
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.username}" />
+		<property name="password" value="${jdbc.password}" />
+		
+		<!-- Druid提供Filter-Chain模式的插件框架 ,stat为最基础filter -->
+		<!-- 通过编写Filter配置到DruidDataSource中就可以拦截JDBC的各种API，从而实现扩展。Druid提供了一系列内置Filter -->
+		<property name="filters" value="stat" />
+		
+		<!-- 以下为连接池的控制,特别注意这些控制参数设置的合理性 -->
+		
+		<!-- 连接池支持的最大连接数 -->
+		<property name="maxActive" value="${dbcp.maxActive}" />
+		<!-- 连接池初始化时连接数量 -->
+		<property name="initialSize" value="${dbcp.initialSize}" />
+		<!-- 连接池中连接用完时,新的请求等待时间,毫秒 -->
+		<property name="maxWait" value="${dbcp.maxWait}" />
+		<!-- 连接池中至少可空闲连接数 -->
+		<property name="minIdle" value="${dbcp.minIdle}" />
+		<!-- 连接池中最多可空闲maxIdle个连接 -->
+		<property name="maxIdle" value="${dbcp.maxIdle}" />
+		
+		<!-- 维护连接池相关配置 -->
+		
+		<!-- 取得连接时验证其有效性 -->
+		<property name="testOnBorrow" value="false" />
+		<!-- 返回连接时验证其有效性 -->
+		<property name="testOnReturn" value="false" />
+		<!-- 指明连接是否被空闲连接回收器(如果有)进行检验.如果检测失败,则连接将被从池中去除 -->
+		<property name="testWhileIdle" value="true" />
+		<property name="validationQuery" value="SELECT 1" />
+		
+		<!-- 每timeBetweenEvictionRunsMillis毫秒检查一次连接池中空闲的连接,把空闲时间超过minEvictableIdleTimeMillis毫秒的连接断开,
+		直到连接池中的连接数到minIdle为止 -->
+		<property name="timeBetweenEvictionRunsMillis" value="${dbcp.timeBetweenEvictionRunsMillis}" />
+		<!-- 连接池中连接可空闲的时间(毫秒)，一定要小于mysql的wait_timeout的值 -->
+		<property name="minEvictableIdleTimeMillis" value="${dbcp.minEvictableIdleTimeMillis}" />
+		
+		<!-- 自动提交关闭 -->
+		<property name="defaultAutoCommit" value="true" />
+		<!-- 是否自动回收超时连接 -->
+		<property name="removeAbandoned" value="true" />
+		<!-- 那么在getNumActive()快要到getMaxActive()的时候，系统会进行无效的 Connection的回收，
+		回收的Connection为removeAbandonedTimeout(默认300秒)中设置的秒数后没有使用的 Connection -->
+		<property name="removeAbandonedTimeout" value="${dbcp.removeAbandonedTimeout}" />
+		<!-- ，将会在回收事件后，在log中打印出回收Connection的错误信息，包括在哪个地方用了Connection却忘记关闭了，在调试的时候很有用 -->
+		<property name="logAbandoned" value="true" />
+		
+		<property name="poolPreparedStatements" value="true" />
+		<property name="maxPoolPreparedStatementPerConnectionSize"
+			value="50" />
+	</bean>
+
+</beans>
